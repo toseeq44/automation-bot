@@ -60,7 +60,7 @@ def human_like_move_and_click(location):
     pyautogui.click()
     time.sleep(random.uniform(0.05, 0.15))
 
-def wait_and_click(image, timeout=180, check_interval=10, confidence=0.9):
+def wait_and_click(image, timeout=180, check_interval=10, confidence=0.9, searching=0):
     start_time = time.time()
     while time.time() - start_time < timeout:
         print("Checking for the image...")
@@ -71,6 +71,10 @@ def wait_and_click(image, timeout=180, check_interval=10, confidence=0.9):
                 human_like_move_and_click(center_location)
                 print(f"Image '{image}' located and clicked.")
                 return True
+            elif searching == 1:
+                print(f"Image '{image}' not found. Scrolling down and trying again.")
+                time.sleep(6)
+                scroll_down_mouse(scrolls=1, delay=0.5)
         except Exception as e:
             print(f"An error occurred: {e}")
         time.sleep(check_interval)
@@ -91,6 +95,19 @@ def wait_for_image(image, timeout=180, check_interval=2, confidence=0.9):
     print(f"Image '{image}' could not be located after {timeout} seconds.")
     return None
 
+def delet_profile_after_vist(ok_button_for_cachy_caler_img, clear_cachy_after_viste_frofile_img, profile_delet_img,dot_profile_info_img):
+    try:
+        if wait_and_click(dot_profile_info_img, timeout=60, check_interval=10, confidence=0.9):
+            time.sleep(2)
+            wait_and_click(profile_delet_img, timeout=60, check_interval=10, confidence=0.9)
+            time.sleep(2)
+            wait_and_click(clear_cachy_after_viste_frofile_img, timeout=60, check_interval=10, confidence=0.9)
+            time.sleep(2)
+            wait_and_click(ok_button_for_cachy_caler_img, timeout=60, check_interval=10, confidence=0.9)
+            return 0
+    except pyautogui.ImageNotFoundException as e:
+        print(e)
+        return
 
 
 def create_profile(profile_creation_ok_but_img, app_lang_togleButon_img, WebRTC_Replac_but_img, proxy_advanced_but_img, adsPower_back_but_img, proxy_connection_success_img, proxy_connection_failed_img, check_proxy_button, Host_Port_img, new_profile_button, select_proxy_type, HTTPS_proxy_type_img, Socks5_proxy_type_img, current_proxy, attempts=5, delay_between_attempts=2):
@@ -110,7 +127,7 @@ def create_profile(profile_creation_ok_but_img, app_lang_togleButon_img, WebRTC_
 
 #Step 2: Select proxy type
     try:
-        if wait_and_click(select_proxy_type, timeout=180, check_interval=10, confidence=0.9):
+        if wait_and_click(select_proxy_type, timeout=180, check_interval=10, confidence=0.9, searching=1):
             print("Proxy type selected successfully.")
     except pyautogui.ImageNotFoundException as e:
         print(e)
@@ -145,8 +162,7 @@ def create_profile(profile_creation_ok_but_img, app_lang_togleButon_img, WebRTC_
         print("Proxy type button could not be found after multiple attempts.")
         return
 
-    time.sleep(0.3)
-    move_mouse_in_circle(3, 30)
+    move_mouse_in_circle(10, 30)
     scroll_down_mouse(1)
 
     # Step 4: Enter proxy details
@@ -175,16 +191,15 @@ def create_profile(profile_creation_ok_but_img, app_lang_togleButon_img, WebRTC_
                 move_mouse_in_circle(3, 10)
                 wait_and_click(adsPower_back_but_img, timeout=180, check_interval=10, confidence=0.9)
                 print("Proxy connection failed. Going back.")
+                return False
     except Exception as e:
         print(f"An error occurred: {e}")
         return 
     
     move_mouse_in_circle(3, 10)
-    print("scroolllled")
 
 # Step 6: Check advance settings
     try:
-        print("process 6 start")
         if wait_and_click(proxy_advanced_but_img, timeout=50, check_interval=4, confidence=0.9):
             time.sleep(2)  # Wait for the result to appear
             scroll_down_mouse(1)
@@ -198,12 +213,18 @@ def create_profile(profile_creation_ok_but_img, app_lang_togleButon_img, WebRTC_
         print(f"An error occurred: {e}")
         return
 
-def opning_profile(profile_readyToOpen_but_img):
+def opning_profile(proxy_failure_img, profile_readyToOpen_but_img):
     time.sleep(1)
-    move_mouse_in_circle(5 , 20)
+    move_mouse_in_circle(15 , 20)
     try:
         if wait_and_click(profile_readyToOpen_but_img, timeout=60, check_interval=10, confidence=0.9):
             print("profile opning  button clicked successfully.")
+            move_mouse_in_circle(10 , 20)
+            if wait_and_click(proxy_failure_img, timeout=60, check_interval=10, confidence=0.9):
+                print("profile open but proxy fail")
+                pyautogui.hotkey('alt', 'f4')
+                print("hot keys pressed")
+                return 1
             return 0
     except pyautogui.ImageNotFoundException as e:
         print(e)
@@ -264,15 +285,24 @@ if __name__ == "__main__":
     app_lang_togleButon_img = "./images/app_lang_togleButon_img.png"
     profile_creation_ok_but_img = "./images/profile_creation_ok_but_img.png"
     profile_readyToOpen_but_img = "./images/profile_readyToOpen_but_img.png"
+    proxy_failure_img = "./images/proxy_failure_img.png"
+    window_close_img = "./images/window_close_img.png"
+    dot_profile_info_img = "./images/dot_profile_info_img.png"
+    profile_delet_img = "./images/profile_delet_img.png"
+    clear_cachy_after_viste_frofile_img = "./images/clear_cachy_after_viste_frofile_img.png"
+    ok_button_for_cachy_caler_img = "./images/ok_button_for_cachy_caler_img.png"
     
 # 01:profile creation in adsPower start
-    # if open_executable_on_desktop(executable_name, window_title):
-    #     if wait_for_window_to_load(window_title):
-    #         create_profile(profile_creation_ok_but_img, app_lang_togleButon_img, WebRTC_Replac_but_img, proxy_advanced_but_img, adsPower_back_but_img, proxy_connection_failed_img, proxy_connection_success_img, check_proxy_buton, Host_Port_img, new_profile_button, select_proxy_type, HTTPS_proxy_type_img, Socks5_proxy_type_img, curent_proxy, attempts=5, delay_between_attempts=2)
-    #     else:
-    #         print("Failed to open AdsPower window in the allotted time.")
-    # else:
-    #     open_executable_on_desktop(executable_name, window_title)
+    if open_executable_on_desktop(executable_name, window_title):
+        if wait_for_window_to_load(window_title):
+          profile_creation_respon =  create_profile(profile_creation_ok_but_img, app_lang_togleButon_img, WebRTC_Replac_but_img, proxy_advanced_but_img, adsPower_back_but_img, proxy_connection_failed_img, proxy_connection_success_img, check_proxy_buton, Host_Port_img, new_profile_button, select_proxy_type, HTTPS_proxy_type_img, Socks5_proxy_type_img, curent_proxy, attempts=5, delay_between_attempts=2)
+        else:
+            print("Failed to open AdsPower window in the allotted time.")
+    else:
+        open_executable_on_desktop(executable_name, window_title)
 
 # 01:profile opning after creation profile.
-    opning_profile(profile_readyToOpen_but_img)
+    if profile_creation_respon is not False :
+        opning_profile(proxy_failure_img, profile_readyToOpen_but_img)
+        
+    print("proxy fail ho chuki ha")

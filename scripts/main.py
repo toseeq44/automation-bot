@@ -1,42 +1,75 @@
 import os
-import fetch_proxies
+import fetching_files_data
 import subprocess
+import threading
+import keyboard
+import time
+
+# Variable to control the bot's running state
+bot_running = True
+
+def esc_listener():
+    global bot_running
+    while bot_running:
+        if keyboard.is_pressed('esc'):
+            print("ESC key pressed. Stopping the bot...")
+            bot_running = False
+            break
+        time.sleep(0.1)
+
+def run_subprocess(script, args):
+    global bot_running
+    process = subprocess.Popen(["python", script, args])
+    while bot_running and process.poll() is None:
+        time.sleep(0.1)
+    if not bot_running:
+        process.terminate()
+        process.wait()
+        return False
+    return process.returncode == 0
 
 def main():
-    # desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop') if os.name == 'nt' else os.path.join(os.path.expanduser('~'), 'Desktop')
+    global bot_running
+
+    # Start the ESC key listener thread
+    listener_thread = threading.Thread(target=esc_listener)
+    listener_thread.start()
+
     desktop = r"C:\Users\tosee\OneDrive\Desktop"
     file_path = os.path.join(desktop, 'proxy_data.txt')
-    proxies = fetch_proxies.read_and_cut_first_proxy(file_path)
+    proxies = fetching_files_data.read_and_cut_first_proxy(file_path)
     print(f"proxie : {proxies}")
     
     if proxies is None:
         print("Error: No proxies found.")
+        bot_running = False
         return
 
-    # Assuming create_profile.py is in the same directory as main.py
     create_profile_script = os.path.join(os.path.dirname(__file__), 'create_profile.py')
-    create_profile_result = subprocess.run(["python", create_profile_script, proxies])
-    
-    if create_profile_result.returncode != 0:
-        print("Error: create_profile.py failed.")
+    if not run_subprocess(create_profile_script, proxies):
+        print("Error: create_profile.py failed or stopped by user.")
+        bot_running = False
         return
 
     keyWord_file_path = os.path.join(desktop, 'keyword_data.txt')
-    array_of_keyWord = fetch_proxies.read_keyWord_file_data(keyWord_file_path)
+    array_of_keyWord = fetching_files_data.read_keyWord_file_data(keyWord_file_path)
     
     if array_of_keyWord is None:
         print("Error: keyWords file missing.")
+        bot_running = False
         return
 
-    # Convert the array of keywords into a comma-separated string
     keywords_str = ",".join(array_of_keyWord)
-    # Assuming profile_visiting.py is in the same directory as main.py
     profile_visiting_script = os.path.join(os.path.dirname(__file__), 'profile_visiting.py')
-    profile_visiting_result = subprocess.run(["python", profile_visiting_script, keywords_str])
-    
-    if profile_visiting_result.returncode != 0:
-        print("Error: profile_visiting.py failed.")
+    if not run_subprocess(profile_visiting_script, keywords_str):
+        print("Error: profile_visiting.py failed or stopped by user.")
+        bot_running = False
         return
+
+    bot_running = False  # Ensure the bot stops after completing the tasks
+
+    # Wait for the listener thread to finish
+    listener_thread.join()
 
 if __name__ == "__main__":
     main()
